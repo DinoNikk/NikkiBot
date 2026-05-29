@@ -25,7 +25,7 @@ const WORK_JOBS = [
 export default {
     data: new SlashCommandBuilder()
         .setName('work')
-        .setDescription('Work to earn some money'),
+        .setDescription('Đi làm thêm mỗi ngày'),
 
     execute: withErrorHandling(async (interaction, config, client) => {
         const deferred = await InteractionHelper.safeDefer(interaction);
@@ -65,7 +65,7 @@ export default {
                     throw createError(
                         "Work cooldown active",
                         ErrorTypes.RATE_LIMIT,
-                        `You're working too fast! Wait **${Math.floor(remaining / 3600000)}h ${Math.floor((remaining % 3600000) / 60000)}m** before working again.`,
+                        `Bạn cày cuốc thế làm gì ==' nghỉ ngơi đi chứ nếu muốn làm thì đợi **${Math.floor(remaining / 3600000)}h ${Math.floor((remaining % 3600000) / 60000)}m** để làm tiếp.`,
                         { timeRemaining: remaining, cooldownType: 'work' }
                     );
                 }
@@ -86,7 +86,7 @@ export default {
 
             await setEconomyData(client, guildId, userId, userData);
 
-            logger.info(`[ECONOMY_TRANSACTION] Work completed`, {
+            logger.info(`[ECONOMY_TRANSACTION] Bạn đã hoàn thành công việc`, {
                 userId,
                 guildId,
                 amount: earned,
@@ -98,23 +98,23 @@ export default {
             });
 
             const embed = successEmbed(
-                "💼 Work Complete!",
-                `You worked as a **${job}** and earned **$${earned.toLocaleString()}**!${multiplierMessage}`
+                "💼 Xong việc rùi!",
+                `Hôm nay bạn đã làm **${job}** và kiếm được **$${earned.toLocaleString()}**!${multiplierMessage}`
             )
                 .addFields(
                     {
-                        name: "💰 New Balance",
+                        name: "💰 Số dư mới",
                         value: `$${userData.wallet.toLocaleString()}`,
                         inline: true,
                     },
                     {
-                        name: "⏰ Next Work",
+                        name: "⏰ Công việc tiếp theo",
                         value: `<t:${Math.floor((now + WORK_COOLDOWN) / 1000)}:R>`,
                         inline: true,
                     }
                 )
                 .setFooter({
-                    text: `Requested by ${interaction.user.tag}`,
+                    text: `Tạo bởi ${interaction.user.tag}`,
                     iconURL: interaction.user.displayAvatarURL(),
                 });
 
