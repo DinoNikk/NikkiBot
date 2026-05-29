@@ -1,8 +1,14 @@
-﻿import 'dotenv/config';
+import 'dotenv/config';
 import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import express from 'express';
 import cron from 'node-cron';
+
+// === CHÈN THÊM THƯ VIỆN NHẠC VÀO ĐÂY ===
+import { DisTube } from 'distube';
+import { YouTubePlugin } from '@distube/youtube';
+import { SoundCloudPlugin } from '@distube/soundcloud';
+// ======================================
 
 import config from './config/application.js';
 import { initializeDatabase } from './utils/database.js';
@@ -17,18 +23,12 @@ class TitanBot extends Client {
   constructor() {
     super({
       intents: [
-        
         GatewayIntentBits.Guilds,                        
         GatewayIntentBits.GuildMembers,                 
-        
-        
         GatewayIntentBits.GuildMessages,                
         GatewayIntentBits.GuildMessageReactions,        
         GatewayIntentBits.MessageContent,               
-        
         GatewayIntentBits.GuildVoiceStates,             
-        
-        
         GatewayIntentBits.GuildBans,                    
       ],
     });
@@ -42,6 +42,21 @@ class TitanBot extends Client {
     this.cooldowns = new Collection();
     this.db = null;
     this.rest = new REST({ version: '10' }).setToken(config.bot.token);
+
+    // === CẤU HÌNH DISTUBE KHÔNG RỜI PHÒNG 24/7 CHÈN TẠI ĐÂY ===
+    this.distube = new DisTube(this, {
+        leaveOnEmpty: false,   // 🟢 Ép bot KHÔNG rời phòng khi phòng trống
+        leaveOnFinish: false,  // 🟢 Ép bot KHÔNG rời phòng khi hát xong bài cuối
+        leaveOnStop: false,    // 🟢 Ép bot KHÔNG rời phòng khi dừng nhạc
+        emitNewSongOnly: true,
+        plugins: [new YouTubePlugin(), new SoundCloudPlugin()]
+    });
+
+    // In log ra màn hình console Railway khi bắt đầu phát nhạc
+    this.distube.on('playSong', (queue, song) => {
+        logger.info(`[Music] Đang phát: ${song.name} tại server: ${queue.textChannel.guild.name}`);
+    });
+    // =======================================================
   }
 
   async start() {
@@ -53,16 +68,15 @@ class TitanBot extends Client {
       const dbInstance = await initializeDatabase();
       this.db = dbInstance.db;
       
-      // Check database status and report
       const dbStatus = this.db.getStatus();
       if (dbStatus.isDegraded) {
         logger.warn('');
         logger.warn('╔═══════════════════════════════════════════════════════╗');
-        logger.warn('║ ⚠️  DATABASE RUNNING IN DEGRADED MODE                 ║');
+        logger.warn('║ ⚠️  DATABASE RUNNING IN DEGRADED MODE                  ║');
         logger.warn('║                                                       ║');
         logger.warn('║ Connection: In-Memory Storage (PostgreSQL unavailable)║');
-        logger.warn('║ Data Persistence: DISABLED - data lost on restart    ║');
-        logger.warn('║ Action Required: Fix PostgreSQL and restart bot      ║');
+        logger.warn('║ Data Persistence: DISABLED - data lost on restart     ║');
+        logger.warn('║ Action Required: Fix PostgreSQL and restart bot       ║');
         logger.warn('╚═══════════════════════════════════════════════════════╝');
         logger.warn('');
       } else {
@@ -258,7 +272,6 @@ class TitanBot extends Client {
           }
         }
         
-        // Save cleaned counters if any were orphaned
         if (orphanedCounters.length > 0) {
           await saveServerCounters(this, guildId, validCounters);
           logger.info(`Cleaned up ${orphanedCounters.length} orphaned counter(s) from guild ${guildId} during scheduled update`);
@@ -314,12 +327,10 @@ class TitanBot extends Client {
     logger.info(`${'='.repeat(60)}`);
 
     try {
-      
       logger.info('Stopping cron jobs...');
       cron.getTasks().forEach(task => task.stop());
       logger.info('✅ Cron jobs stopped');
 
-      // Close database connection
       if (this.db && this.db.db) {
         logger.info('Closing database connection...');
         try {
@@ -332,21 +343,18 @@ class TitanBot extends Client {
         }
       }
 
-      
       logger.info('Destroying Discord client...');
       if (this.isReady()) {
         try {
           this.destroy();
           logger.info('✅ Discord client destroyed');
         } catch (error) {
-          
-          
           logger.warn('Discord client destroy warning (non-critical):', error.message);
         }
       }
 
       logger.info('✅ Graceful shutdown complete');
-  shutdownLog('Bot stopped successfully.');
+      shutdownLog('Bot stopped successfully.');
       process.exit(0);
     } catch (error) {
       logger.error('Error during graceful shutdown:', error);
@@ -381,6 +389,3 @@ try {
 }
 
 export default TitanBot;
-
-
-
