@@ -107,6 +107,16 @@ export default {
                 .setName('bobble')
                 .setDescription('Play Bobble League')
         )
+        .addSubcommand(subcommand =>
+            subcommand
+                .setName('music')
+                .setDescription('Yêu cầu bot vào phòng voice phát nhạc')
+                .addStringOption(option =>
+                    option.setName('song')
+                        .setDescription('Tên bài hát hoặc link YouTube/Spotify')
+                        .setRequired(true)
+                )
+        )
         
         .addSubcommand(subcommand =>
             subcommand
@@ -126,6 +136,41 @@ export default {
 
             const { member, options } = interaction;
             const activity = options.getSubcommand();
+            const { member, options } = interaction;
+            const activity = options.getSubcommand();
+
+            if (!member.voice.channel) {
+                return await InteractionHelper.safeEditReply(interaction, {
+                    embeds: [errorEmbed('Not in Voice Channel', 'You need to be in a voice channel!')]
+                });
+            }
+
+            // === ĐOẠN CODE THÊM MỚI CHO CHO BOT NHẠC ===
+            if (activity === 'music') {
+                const songName = options.getString('song');
+                
+                // Lưu ý: Bạn cần phải khởi tạo client.distube ở file chính (index.js) trước
+                if (!client.distube) {
+                    return await InteractionHelper.safeEditReply(interaction, {
+                        embeds: [errorEmbed('Lỗi', 'Hệ thống nhạc chưa được cài đặt trên Bot!')]
+                    });
+                }
+
+                await client.distube.play(member.voice.channel, songName, {
+                    textChannel: interaction.channel,
+                    member: member
+                });
+
+                return await InteractionHelper.safeEditReply(interaction, {
+                    embeds: [successEmbed('🎵 Đang phát', `Đang tải bài hát: **${songName}**`)]
+                });
+            }
+            // ============================================
+
+            // Bên dưới là code xử lý Discord Activity cũ của bạn, giữ nguyên:
+            const activityId = ACTIVITIES[activity];
+            const activityName = ACTIVITY_NAMES[activity] || activity;
+            // ... các đoạn code rest.post phía sau giữ nguyên
             const activityId = ACTIVITIES[activity];
             const activityName = ACTIVITY_NAMES[activity] || activity;
 
