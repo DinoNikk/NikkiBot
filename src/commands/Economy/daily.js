@@ -14,7 +14,7 @@ const PREMIUM_BONUS_PERCENTAGE = 0.1;
 export default {
     data: new SlashCommandBuilder()
         .setName('daily')
-        .setDescription('Claim your daily cash reward'),
+        .setDescription('Nhận thưởng mỗi ngày của bạn'),
 
     execute: withErrorHandling(async (interaction, config, client) => {
         const deferred = await InteractionHelper.safeDefer(interaction);
@@ -44,7 +44,7 @@ export default {
                 throw createError(
                     "Daily cooldown active",
                     ErrorTypes.RATE_LIMIT,
-                    `You need to wait before claiming daily again. Try again in **${formatDuration(timeRemaining)}**.`,
+                    `Bạn đã nhận thưởng hôm nãy rùi , đợi khoảng **${formatDuration(timeRemaining)}**.`,
                     { timeRemaining, cooldownType: 'daily' }
                 );
             }
@@ -85,7 +85,7 @@ export default {
 
             const embed = successEmbed(
                 "✅ Daily Claimed!",
-                `You have claimed your daily **$${earned.toLocaleString()}**!${bonusMessage}`
+                `Quà đăng nhập hôm nay là **$${earned.toLocaleString()}**!${bonusMessage}`
             )
                 .addFields({
                     name: "New Cash Balance",
